@@ -1,5 +1,11 @@
 package org.example
 
+import java.io.File
+
 fun main() {
-    println("Hello World!")
+    val fileWords: File = File("words.txt")
+//    fileWords.createNewFile()
+//    fileWords.readLines()
+
+    fileWords.forEachLine { println(it) }
 }
