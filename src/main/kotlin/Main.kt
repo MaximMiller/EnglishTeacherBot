@@ -1,10 +1,9 @@
 package org.example
 
-import java.io.File
-
 fun main() {
-    val fileWords: File = File("words.txt")
-    for (i in fileWords.readLines()) {
-        println(i)
+    val dictionary = readWordsFromFile("words.txt")
+    dictionary.forEach { word ->
+        println("Слово: ${word.word}, Перевод: ${word.translation}, Количество правильных ответов: " +
+                "${word.correctAnswersCount}")
     }
 }
