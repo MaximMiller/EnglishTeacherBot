@@ -1,21 +1,24 @@
 package org.example
 
+private const val MIN_AMOUNT_CORRECT_ANSWERS = 3
+
+fun List<Word>.getLearnedWordsCount() = count { it.correctAnswersCount >= MIN_AMOUNT_CORRECT_ANSWERS }
+
+fun List<Word>.getLearnedWordsPercentage() = if (isNotEmpty()) {
+    getLearnedWordsCount() * 100 / size
+} else {
+    0
+}
+
+fun printStatistics(words: List<Word>) {
+    val learnedWordsCount = words.getLearnedWordsCount()
+    val totalWordsCount = words.size
+    val learnedPercentage = words.getLearnedWordsPercentage()
+
+    println("Выучено $learnedWordsCount из $totalWordsCount слов | $learnedPercentage%")
+}
+
 fun main() {
-    fun List<Word>.getLearnedWordsCount() = count { it.correctAnswersCount >= 3 }
-
-    fun List<Word>.getLearnedWordsPercentage() = if (isNotEmpty()) {
-        getLearnedWordsCount() * 100 / size
-    } else {
-        0
-    }
-
-    fun printStatistics(words: List<Word>) {
-        val learnedWordsCount = words.getLearnedWordsCount()
-        val totalWordsCount = words.size
-        val learnedPercentage = words.getLearnedWordsPercentage()
-
-        println("Выучено $learnedWordsCount из $totalWordsCount слов | $learnedPercentage%")
-    }
     while (true) {
         println(
             """
