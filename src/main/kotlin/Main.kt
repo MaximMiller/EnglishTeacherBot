@@ -18,7 +18,21 @@ fun printStatistics(words: List<Word>) {
     println("Выучено $learnedWordsCount из $totalWordsCount слов | $learnedPercentage%")
 }
 
+fun List<Word>.getUnlearnedWords() = filter { it.correctAnswersCount < MIN_AMOUNT_CORRECT_ANSWERS }
+
+fun generateQuestionAndAnswers(words: List<Word>): Pair<Word, List<Word>> {
+    val unlearnedWords = words.getUnlearnedWords()
+    if (unlearnedWords.isEmpty()) {
+        println("Вы выучили все слова")
+        return Pair(Word("", ""), listOf())
+    }
+    val questionWord = unlearnedWords.random()
+    val answerOptions = (unlearnedWords - questionWord).shuffled().take(3) + questionWord
+    return Pair(questionWord, answerOptions.shuffled())
+}
+
 fun main() {
+    val words = readWordsFromFile("words.txt")
     while (true) {
         println(
             """
@@ -31,12 +45,20 @@ fun main() {
         )
         val answer = readln().toIntOrNull()
         when (answer) {
-            1 -> println("Вы нажали на 1")
-            2 -> {
-                val words = readWordsFromFile("words.txt")
-                printStatistics(words)
+            1 -> {
+                while (true) {
+                    val (questionWord, answerOptions) = generateQuestionAndAnswers(words)
+                    if (answerOptions.isEmpty()) break
+
+                    println("Слово для изучения: ${questionWord.word}")
+                    println("Варианты ответа:")
+                    answerOptions.forEachIndexed { index, word ->
+                        println("${index + 1}. ${word.translation}")
+                    }
+                }
             }
 
+            2 -> printStatistics(words)
             0 -> break
             else -> println("Ошибка! Введите число только из меню")
         }
