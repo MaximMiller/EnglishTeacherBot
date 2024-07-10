@@ -20,15 +20,15 @@ fun printStatistics(words: List<Word>) {
 
 fun List<Word>.getUnlearnedWords() = filter { it.correctAnswersCount < MIN_AMOUNT_CORRECT_ANSWERS }
 
-fun generateQuestionAndAnswers(words: List<Word>): Pair<Word, List<Word>> {
+fun generateQuestionAndAnswers(words: List<Word>): Pair<Word, List<Word>>? {
     val unlearnedWords = words.getUnlearnedWords()
     if (unlearnedWords.isEmpty()) {
         println("Вы выучили все слова")
-        return Pair(Word("", ""), listOf())
+        return null
     }
     val questionWord = unlearnedWords.random()
     val answerOptions = (unlearnedWords - questionWord).shuffled().take(3) + questionWord
-    return Pair(questionWord, answerOptions.shuffled())
+    return questionWord to answerOptions.shuffled()
 }
 
 fun main() {
@@ -47,8 +47,7 @@ fun main() {
         when (answer) {
             1 -> {
                 while (true) {
-                    val (questionWord, answerOptions) = generateQuestionAndAnswers(words)
-                    if (answerOptions.isEmpty()) break
+                    val (questionWord, answerOptions) = generateQuestionAndAnswers(words)?:break
 
                     println("Слово для изучения: ${questionWord.word}")
                     println("Варианты ответа:")
