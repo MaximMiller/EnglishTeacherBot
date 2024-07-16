@@ -1,5 +1,7 @@
 package org.example
 
+import java.io.File
+
 private const val MIN_AMOUNT_CORRECT_ANSWERS = 3
 
 fun List<Word>.getLearnedWordsCount() = count { it.correctAnswersCount >= MIN_AMOUNT_CORRECT_ANSWERS }
@@ -19,6 +21,15 @@ fun printStatistics(words: List<Word>) {
 }
 
 fun List<Word>.getUnlearnedWords() = filter { it.correctAnswersCount < MIN_AMOUNT_CORRECT_ANSWERS }
+
+fun saveDictionary(dictionary: List<Word>) {
+    val file = File("words.txt")
+    file.printWriter().use { out ->
+        dictionary.forEach {
+            out.println("${it.word},${it.translation},${it.correctAnswersCount}")
+        }
+    }
+}
 
 fun generateQuestionAndAnswers(words: List<Word>): Pair<Word, List<Word>>? {
     val unlearnedWords = words.getUnlearnedWords()
@@ -47,12 +58,32 @@ fun main() {
         when (answer) {
             1 -> {
                 while (true) {
-                    val (questionWord, answerOptions) = generateQuestionAndAnswers(words)?:break
+                    val (questionWord, answerOptions) = generateQuestionAndAnswers(words) ?: break
 
                     println("Слово для изучения: ${questionWord.word}")
                     println("Варианты ответа:")
                     answerOptions.forEachIndexed { index, word ->
                         println("${index + 1}. ${word.translation}")
+                    }
+                    println("0. Назад в меню")
+                    val userInput = readln().toIntOrNull()
+
+                    if (userInput == 0) {
+                        println("Возвращение в главное меню...")
+                        break
+                    }
+
+                    if (userInput != null && userInput in 1..4) {
+                        val correctIndex = answerOptions.indexOfFirst { it.translation == questionWord.translation }
+                        if (userInput - 1 == correctIndex) {
+                            println("Правильно!")
+                            questionWord.correctAnswersCount++
+                            saveDictionary(words)
+                        } else {
+                            println("Неправильно. Правильный ответ: ${questionWord.translation}")
+                        }
+                    } else {
+                        println("Неверный ввод. Пожалуйста, введите число от 0 до 4.")
                     }
                 }
             }
