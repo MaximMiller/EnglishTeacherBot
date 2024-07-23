@@ -2,9 +2,7 @@ package org.example
 
 import java.io.File
 
-private const val MIN_AMOUNT_CORRECT_ANSWERS = 3
 private const val AMOUNT_PARTS_IN_LINE = 3
-private const val FILE_NAME = "words.txt"
 
 data class Word(
     val word: String,
@@ -23,11 +21,15 @@ data class Question(
     val answerOptions: List<Word>,
 )
 
-class LearnWordsTrainer {
+class LearnWordsTrainer(
+    private val numberOptionsShownQuestion: Int,
+    private val minAmountCorrectAnswers: Int,
+    private val fileName:String,
+) {
     private val words: List<Word> = loadDictionary()
 
     fun getStatistics(): Statistics {
-        val learnedWordsCount = words.count { it.correctAnswersCount >= MIN_AMOUNT_CORRECT_ANSWERS }
+        val learnedWordsCount = words.count { it.correctAnswersCount >= minAmountCorrectAnswers }
         val totalWordsCount = words.size
         val learnedPercentage = if (totalWordsCount > 0) {
             learnedWordsCount * 100 / totalWordsCount
@@ -38,13 +40,12 @@ class LearnWordsTrainer {
     }
 
     fun getQuestion(): Question? {
-        val unlearnedWords = words.filter { it.correctAnswersCount < MIN_AMOUNT_CORRECT_ANSWERS }
+        val unlearnedWords = words.filter { it.correctAnswersCount < minAmountCorrectAnswers }
         if (unlearnedWords.isEmpty()) {
-            println("Вы выучили все слова")
             return null
         }
         val questionWord = unlearnedWords.random()
-        val answerOptions = (unlearnedWords - questionWord).shuffled().take(3) + questionWord
+        val answerOptions = (unlearnedWords - questionWord).shuffled().take(numberOptionsShownQuestion) + questionWord
         return Question(questionWord, answerOptions.shuffled())
 
     }
@@ -54,28 +55,25 @@ class LearnWordsTrainer {
     }
 
     fun checkAnswer(userAnswerIndex: Int?, question: Question): Boolean {
-        if (userAnswerIndex == null || userAnswerIndex !in 1..4) {
-            println("Неверный ввод. Пожалуйста, введите число от 1 до 4.")
+        if (userAnswerIndex == null || userAnswerIndex !in 1..numberOptionsShownQuestion) {
             return false
         }
         val correctIndex = question.answerOptions.indexOfFirst { it.translation == question.word.translation }
         return if (userAnswerIndex - 1 == correctIndex) {
-            println("Правильно!")
             question.word.correctAnswersCount++
             saveDictionary()
             true
         } else {
-            println("Неправильно. Правильный ответ: ${question.word.translation}")
             false
         }
     }
 
     private fun loadDictionary(): List<Word> {
-        return File(FILE_NAME).readLines().mapNotNull { it.toWord() }
+        return File(fileName).readLines().mapNotNull { it.toWord() }
     }
 
     private fun saveDictionary() {
-        File(FILE_NAME).bufferedWriter().use { out ->
+        File(fileName).bufferedWriter().use { out ->
             words.forEach {
                 out.write("${it.word}|${it.translation}|${it.correctAnswersCount}\n")
             }

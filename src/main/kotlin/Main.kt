@@ -2,7 +2,7 @@ package org.example
 
 
 fun main() {
-    val trainer = LearnWordsTrainer()
+    val trainer = LearnWordsTrainer(3, 4, "words.txt")
     while (true) {
         println(
             """
@@ -32,13 +32,16 @@ fun main() {
                     }
 
                     trainer.checkAnswer(userInput, question)
+
                 }
             }
 
             2 -> {
                 val stats = trainer.getStatistics()
-                println("Выучено ${stats.learnedWordsCount} из ${stats.totalWordsCount} слов | " +
-                        "${stats.learnedPercentage}%")
+                println(
+                    "Выучено ${stats.learnedWordsCount} из ${stats.totalWordsCount} слов | " +
+                            "${stats.learnedPercentage}%"
+                )
             }
 
             0 -> break
