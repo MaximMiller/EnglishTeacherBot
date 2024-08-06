@@ -34,7 +34,7 @@ fun main() {
                             break
                         }
                         if (!trainer.checkAnswer(userInput, question)){
-                            println("Неправильно ${trainer.checkAnswer(userInput,question).}")
+                            println("Неправильно ${trainer.checkAnswer(userInput,question)}")
                         }else{
                             println("Правильно")
                         }
