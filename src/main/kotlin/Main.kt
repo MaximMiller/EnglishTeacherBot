@@ -2,7 +2,7 @@ package org.example
 
 
 fun main() {
-    val trainer = LearnWordsTrainer(3, 4, "words.txt")
+    val trainer = LearnWordsTrainer(4, 3, "words.txt")
     while (true) {
         println(
             """
@@ -16,22 +16,30 @@ fun main() {
         when (readln().toIntOrNull()) {
             1 -> {
                 while (true) {
-                    val question = trainer.getNextQuestion() ?: break
-
-                    println("Слово для изучения: ${question.word.word}")
-                    println("Варианты ответа:")
-                    question.answerOptions.forEachIndexed { index, word ->
-                        println("${index + 1}. ${word.translation}")
-                    }
-                    println("0. Назад в меню")
-                    val userInput = readln().toIntOrNull()
-
-                    if (userInput == 0) {
-                        println("Возвращение в главное меню...")
+                    val question = trainer.getNextQuestion()
+                    if (question == null) {
+                        println("Все слова выучены")
                         break
-                    }
+                    } else {
+                        println("Слово для изучения: ${question.word.word}")
+                        println("Варианты ответа:")
+                        question.answerOptions.forEachIndexed { index, word ->
+                            println("${index + 1}. ${word.translation}")
+                        }
+                        println("0. Назад в меню")
+                        val userInput = readln().toIntOrNull()
 
-                    trainer.checkAnswer(userInput, question)
+                        if (userInput == 0) {
+                            println("Возвращение в главное меню...")
+                            break
+                        }
+                        if (!trainer.checkAnswer(userInput, question)){
+                            println("Неправильно ${trainer.checkAnswer(userInput,question)}")
+                        }else{
+                            println("Правильно")
+                        }
+
+                    }
 
                 }
             }

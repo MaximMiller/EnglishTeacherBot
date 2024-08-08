@@ -22,14 +22,14 @@ data class Question(
 )
 
 class LearnWordsTrainer(
-    private val numberOptionsShownQuestion: Int,
-    private val minAmountCorrectAnswers: Int,
-    private val fileName:String,
+    private val countOfQuestionWords: Int = 4,
+    private val learnedAnswerCount: Int = 3,
+    private val fileName: String,
 ) {
     private val words: List<Word> = loadDictionary()
 
     fun getStatistics(): Statistics {
-        val learnedWordsCount = words.count { it.correctAnswersCount >= minAmountCorrectAnswers }
+        val learnedWordsCount = words.count { it.correctAnswersCount >= learnedAnswerCount }
         val totalWordsCount = words.size
         val learnedPercentage = if (totalWordsCount > 0) {
             learnedWordsCount * 100 / totalWordsCount
@@ -40,13 +40,24 @@ class LearnWordsTrainer(
     }
 
     fun getQuestion(): Question? {
-        val unlearnedWords = words.filter { it.correctAnswersCount < minAmountCorrectAnswers }
-        if (unlearnedWords.isEmpty()) {
-            return null
-        }
-        val questionWord = unlearnedWords.random()
-        val answerOptions = (unlearnedWords - questionWord).shuffled().take(numberOptionsShownQuestion) + questionWord
-        return Question(questionWord, answerOptions.shuffled())
+        val notLearnedList = words.filter { it.correctAnswersCount < learnedAnswerCount }
+        if (notLearnedList.isEmpty()) return null
+
+
+        val questionWords = if (notLearnedList.size < countOfQuestionWords) {
+            val learnedList = words.filter { it.correctAnswersCount >= learnedAnswerCount }.shuffled()
+            notLearnedList.shuffled()
+                .take(countOfQuestionWords) + learnedList.take(countOfQuestionWords - notLearnedList.size)
+        } else {
+            notLearnedList.shuffled().take(countOfQuestionWords)
+        }.shuffled()
+
+        val correctAnswer = questionWords.random()
+        val question = Question(
+            word = correctAnswer,
+            answerOptions = questionWords,
+        )
+        return question
 
     }
 
@@ -55,7 +66,7 @@ class LearnWordsTrainer(
     }
 
     fun checkAnswer(userAnswerIndex: Int?, question: Question): Boolean {
-        if (userAnswerIndex == null || userAnswerIndex !in 1..numberOptionsShownQuestion) {
+        if (userAnswerIndex == null || userAnswerIndex !in 1..countOfQuestionWords) {
             return false
         }
         val correctIndex = question.answerOptions.indexOfFirst { it.translation == question.word.translation }
