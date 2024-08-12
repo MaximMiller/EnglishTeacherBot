@@ -9,15 +9,28 @@ const val BASE_URL = "https://api.telegram.org/bot"
 
 fun main(argument: Array<String>) {
     val botToken = argument[0]
-    val urlGetMe = "$BASE_URL$botToken/getMe"
-    val urlGetUpdates = "$BASE_URL$botToken/getUpdates"
+    var nextUpdateId = 0
 
-    val client = HttpClient.newBuilder().build()
-    val request = HttpRequest.newBuilder().uri(URI.create(urlGetMe)).build()
-    val response = client.send(request, HttpResponse.BodyHandlers.ofString())
-    println(response.body())
-
-    val requestGetUpdates = HttpRequest.newBuilder().uri(URI.create(urlGetUpdates)).build()
-    val responseGetUpdates = client.send(requestGetUpdates, HttpResponse.BodyHandlers.ofString())
-    println(responseGetUpdates.body())
+    while (true) {
+        Thread.sleep(1000)
+        val updates = getUpdates(botToken, nextUpdateId)
+        val startIndex = updates.lastIndexOf("update_id") + 11
+        val endIndex = updates.lastIndexOf(",\n\"message\"")
+        println(updates)
+        if (startIndex != -1 && endIndex != -1) {
+            val currentUpdateId = updates.substring(startIndex, endIndex)
+            nextUpdateId = currentUpdateId.toInt() + 1
+            println(updates)
+        }
+    }
 }
+
+fun getUpdates(botToken: String, updateId: Int): String {
+    val urlWithOffset = "$BASE_URL$botToken/getUpdates?offset=$updateId"
+    val client = HttpClient.newBuilder().build()
+    val requestGetUpdate = HttpRequest.newBuilder().uri(URI.create(urlWithOffset)).build()
+    val responseGetUpdates = client.send(requestGetUpdate, HttpResponse.BodyHandlers.ofString())
+    return responseGetUpdates.body()
+}
+
+
