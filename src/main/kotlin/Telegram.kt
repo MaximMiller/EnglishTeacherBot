@@ -14,12 +14,12 @@ fun main(argument: Array<String>) {
     while (true) {
         Thread.sleep(1000)
         val updates = getUpdates(botToken, nextUpdateId)
-        val startIndex = updates.lastIndexOf("update_id") + 11
-        val endIndex = updates.lastIndexOf(",\n\"message\"")
+        val updateIdRegex = Regex(pattern = "\"update_id\":\\s*(\\d+)")
+        val matches = updateIdRegex.find(updates)
         println(updates)
-        if (startIndex != -1 && endIndex != -1) {
-            val currentUpdateId = updates.substring(startIndex, endIndex)
-            nextUpdateId = currentUpdateId.toInt() + 1
+        if (matches != null) {
+            val updateId = matches.groupValues[1].toInt()
+            nextUpdateId = updateId + 1
             println(updates)
         }
     }
