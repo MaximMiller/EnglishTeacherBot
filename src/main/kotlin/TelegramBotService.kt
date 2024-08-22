@@ -33,6 +33,12 @@ data class InlineKeyboardButton(
     val callback_data: String,
 )
 
+data class Word(
+    val word: String,
+    val translation: String,
+    var correctAnswersCount: Int = 0,
+)
+
 class TelegramBotService(private val botToken: String) {
     private val client = OkHttpClient()
     fun getUpdates(updateId: Int): String? {
@@ -67,7 +73,6 @@ class TelegramBotService(private val botToken: String) {
             .url(urlWithSendMessage)
             .post(requestBody)
             .build()
-
         return try {
             client.newCall(requestSendMessage).execute().use { responseSendMessage ->
                 if (responseSendMessage.isSuccessful) {
