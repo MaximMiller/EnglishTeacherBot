@@ -9,6 +9,9 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
+const val BTN_LEARN_WORDS = "learn_words_clicked"
+const val BTN_STATISTICS_CLICKED = "statistics_clicked"
+
 data class Word(
     val word: String,
     val translation: String,
@@ -74,8 +77,8 @@ class TelegramBotService(
         val urlWithSendMenu = "$BASE_URL$botToken/sendMessage"
         val inlineKeyboardButton = listOf(
             listOf(
-                InlineKeyboardButton("Изучить слова", "learn_words_clicked"),
-                InlineKeyboardButton("Статистика", "statistics_clicked")
+                InlineKeyboardButton("Изучить слова", BTN_LEARN_WORDS),
+                InlineKeyboardButton("Статистика", BTN_STATISTICS_CLICKED)
             )
         )
         val sendMenuRequest = SendMenuRequest(chatId, "Основное меню", InlineKeyboardMarkup(inlineKeyboardButton))
