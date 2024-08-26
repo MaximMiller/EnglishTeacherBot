@@ -1,37 +1,13 @@
 package org.example
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import okio.IOException
 import kotlinx.serialization.encodeToString
-
-@Serializable
-data class SendMessageRequest(
-    val chat_id: Int,
-    val text: String,
-)
-
-@Serializable
-data class SendMenuRequest(
-    val chat_id: Int,
-    val text: String,
-    val reply_markup: InlineKeyboardMarkup,
-)
-
-@Serializable
-data class InlineKeyboardMarkup(
-    val inline_keyboard: List<List<InlineKeyboardButton>>,
-)
-
-@Serializable
-data class InlineKeyboardButton(
-    val text: String,
-    val callback_data: String,
-)
+import kotlinx.serialization.json.Json
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 
 data class Word(
     val word: String,
@@ -39,39 +15,55 @@ data class Word(
     var correctAnswersCount: Int = 0,
 )
 
-class TelegramBotService(private val botToken: String) {
-    private val client = OkHttpClient()
-    fun getUpdates(updateId: Int): String? {
-        val urlWithOffset = "$BASE_URL$botToken/getUpdates?offset=$updateId"
-        val requestGetUpdate = Request.Builder()
-            .url(urlWithOffset)
-            .build()
+@Serializable
+data class SendMessageRequest(
+    @SerialName("chat_id")
+    val chatId: Int,
+    val text: String,
+)
 
-        return try {
-            client.newCall(requestGetUpdate).execute().use { responseGetUpdate ->
-                if (responseGetUpdate.isSuccessful) {
-                    responseGetUpdate.body?.string()
-                } else {
-                    val errorMsg = "Failed to get updates: ${responseGetUpdate.code} ${responseGetUpdate.message}"
-                    throw IOException(errorMsg)
-                }
-            }
-        } catch (e: IOException) {
-            e.printStackTrace()
-            null
-        }
+@Serializable
+data class InlineKeyboardButton(
+    val text: String,
+    @SerialName("callback_data")
+    val callbackData: String,
+)
+
+@Serializable
+data class InlineKeyboardMarkup(
+    @SerialName("inline_keyboard")
+    val inlineKeyboard: List<List<InlineKeyboardButton>>,
+)
+
+@Serializable
+data class SendMenuRequest(
+    @SerialName("chat_id")
+    val chatId: Int,
+    val text: String,
+    @SerialName("reply_markup")
+    val replyMarkup: InlineKeyboardMarkup,
+)
+
+class TelegramBotService(
+    private val botToken: String,
+) {
+    val json = Json { ignoreUnknownKeys = true }
+    private val client = HttpClient.newBuilder().build()
+    fun getUpdates(updateId: Int): String {
+        val urlWithOffset = "$BASE_URL$botToken/getUpdates?offset=$updateId"
+        val requestGetUpdate = HttpRequest.newBuilder().uri(URI.create(urlWithOffset)).build()
+        val responseGetUpdates = client.send(requestGetUpdate, HttpResponse.BodyHandlers.ofString())
+        return responseGetUpdates.body()
     }
 
-    fun sendMessage(chatId: Int, message: String): String? {
+    fun sendMessage(chatId: Int, message: String): String {
         val urlWithSendMessage = "$BASE_URL$botToken/sendMessage"
         val sendMessageRequest = SendMessageRequest(chatId, message)
-        val bodySendMessage = Json.encodeToString(sendMessageRequest)
-        val mediaType = "application/json; charset=utf-8".toMediaType()
-        val requestBody = bodySendMessage.toRequestBody(mediaType)
-
-        val requestSendMessage = Request.Builder()
-            .url(urlWithSendMessage)
-            .post(requestBody)
+        val bodySendMessage = json.encodeToString(sendMessageRequest)
+        val requestSendMessage = HttpRequest.newBuilder()
+            .uri(URI.create(urlWithSendMessage))
+            .header("Content-Type", "application/json; charset=UTF-8")
+            .POST(HttpRequest.BodyPublishers.ofString(bodySendMessage))
             .build()
         return try {
             client.newCall(requestSendMessage).execute().use { responseSendMessage ->
@@ -119,5 +111,24 @@ class TelegramBotService(private val botToken: String) {
             e.printStackTrace()
             null
         }
+    }
+
+    fun sendMenu(chatId: Int): String {
+        val urlWithSendMenu = "$BASE_URL$botToken/sendMessage"
+        val inlineKeyboardButton = listOf(
+            listOf(
+                InlineKeyboardButton("Изучить слова", "learn_words_clicked"),
+                InlineKeyboardButton("Статистика", "statistics_clicked")
+            )
+        )
+        val sendMenuRequest = SendMenuRequest(chatId, "Основное меню", InlineKeyboardMarkup(inlineKeyboardButton))
+        val bodySendMenu = json.encodeToString(sendMenuRequest)
+        val requestSendMenu = HttpRequest.newBuilder()
+            .uri(URI.create(urlWithSendMenu))
+            .header("Content-Type", "application/json; charset=UTF-8")
+            .POST(HttpRequest.BodyPublishers.ofString(bodySendMenu))
+            .build()
+        val responseSendMenu = client.send(requestSendMenu, HttpResponse.BodyHandlers.ofString())
+        return responseSendMenu.body()
     }
 }

@@ -1,46 +1,60 @@
 package org.example
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 
+@Serializable
+data class UpdateResponse(
+    val ok: Boolean,
+    val result: List<Update>,
+)
+
+@Serializable
+data class Update(
+    @SerialName("update_id")
+    val updateId: Int,
+    val message: Message?,
+)
+
+@Serializable
+data class Message(
+    val chat: Chat,
+    val text: String?,
+)
+
+@Serializable
+data class Chat(
+    val id: Int,
+)
+
+const val WELCOME = "hello"
+const val START = "start"
 const val BASE_URL = "https://api.telegram.org/bot"
 
 fun main(argument: Array<String>) {
     val botToken = argument[0]
-    var lastUpdateId = 0
     val telegramBotService = TelegramBotService(botToken)
-    val json = Json { ignoreUnknownKeys = true }
+    var nextUpdateId = 0
+    val json = telegramBotService.json
 
     while (true) {
         Thread.sleep(1000)
-
-        val updatesJson: String? = telegramBotService.getUpdates(lastUpdateId)
+        val updatesJson: String = telegramBotService.getUpdates(nextUpdateId)
         println(updatesJson)
 
-        val updates = updatesJson?.let {
+        val updates = updatesJson.let {
             json.decodeFromString<UpdateResponse>(it)
-        } ?: continue
+        }
 
         updates.result.forEach { update ->
-            val updateId = update.update_id
-            val chatId = getChatId(update)
+            val updateId = update.updateId
+            val chatId = update.message?.chat?.id
             val message = update.message?.text
-            val callbackData = update.callback_query?.data
-
-            lastUpdateId = updateId + 1
-            println(lastUpdateId)
-
+            nextUpdateId = updateId + 1
             if (message != null && chatId != null) {
                 when (message.lowercase()) {
-                    "hello" -> telegramBotService.sendMessage(chatId, "Hello")
-                    "start" -> telegramBotService.sendMenu(chatId)
-                }
-            }
-
-            if (callbackData != null && chatId != null) {
-                when (callbackData.lowercase()) {
-                    "statistics_clicked" -> telegramBotService.sendMessage(chatId, "Выучено 10 из 10 слов | 100%")
-                    "learn_words_clicked" -> telegramBotService.sendMessage(chatId, "words")
+                    WELCOME -> telegramBotService.sendMessage(chatId, "Hello")
+                    START -> telegramBotService.sendMenu(chatId)
                 }
             }
         }
