@@ -2,6 +2,7 @@ package org.example
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 @Serializable
 data class UpdateResponse(
@@ -33,9 +34,9 @@ const val BASE_URL = "https://api.telegram.org/bot"
 
 fun main(argument: Array<String>) {
     val botToken = argument[0]
-    val telegramBotService = TelegramBotService(botToken)
+    val json = Json { ignoreUnknownKeys = true }
+    val telegramBotService = TelegramBotService(botToken, json)
     var nextUpdateId = 0
-    val json = telegramBotService.json
 
     while (true) {
         Thread.sleep(1000)

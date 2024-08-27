@@ -49,8 +49,8 @@ data class SendMenuRequest(
 
 class TelegramBotService(
     private val botToken: String,
+    private val json: Json,
 ) {
-    val json = Json { ignoreUnknownKeys = true }
     private val client = HttpClient.newBuilder().build()
     fun getUpdates(updateId: Int): String {
         val urlWithOffset = "$BASE_URL$botToken/getUpdates?offset=$updateId"
