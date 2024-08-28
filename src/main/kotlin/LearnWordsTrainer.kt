@@ -4,12 +4,6 @@ import java.io.File
 
 private const val AMOUNT_PARTS_IN_LINE = 3
 
-data class Word(
-    val word: String,
-    val translation: String,
-    var correctAnswersCount: Int = 0,
-)
-
 data class Statistics(
     val learnedWordsCount: Int,
     val totalWordsCount: Int,

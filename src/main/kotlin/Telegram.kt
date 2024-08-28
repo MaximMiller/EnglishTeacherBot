@@ -1,28 +1,63 @@
 package org.example
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+
+@Serializable
+data class UpdateResponse(
+    val ok: Boolean,
+    val result: List<Update>,
+)
+
+@Serializable
+data class Update(
+    @SerialName("update_id")
+    val updateId: Int,
+    val message: Message?,
+)
+
+@Serializable
+data class Message(
+    val chat: Chat,
+    val text: String?,
+)
+
+@Serializable
+data class Chat(
+    val id: Int,
+)
+
+const val WELCOME = "hello"
+const val START = "start"
 const val BASE_URL = "https://api.telegram.org/bot"
 
 fun main(argument: Array<String>) {
     val botToken = argument[0]
+    val json = Json { ignoreUnknownKeys = true }
+    val telegramBotService = TelegramBotService(botToken, json)
     var nextUpdateId = 0
-    var chatId = 0
-    val telegramBotService = TelegramBotService()
 
     while (true) {
         Thread.sleep(1000)
-        val updates = telegramBotService.getUpdates(botToken, nextUpdateId)
-        val updateIdRegex = Regex(pattern = "\"update_id\":\\s*(\\d+)")
-        val chatIdRegex = Regex(pattern = "\"chat\":\\{\"id\":\\s*(\\d+)")
-        val matchesUpdateId = updateIdRegex.find(updates)
-        val matchesChatId = chatIdRegex.find(updates)
-        println(updates)
-        if (matchesUpdateId != null) {
-            val updateId = matchesUpdateId.groupValues[1].toInt()
+        val updatesJson: String = telegramBotService.getUpdates(nextUpdateId)
+        println(updatesJson)
+
+        val updates = updatesJson.let {
+            json.decodeFromString<UpdateResponse>(it)
+        }
+
+        updates.result.forEach { update ->
+            val updateId = update.updateId
+            val chatId = update.message?.chat?.id
+            val message = update.message?.text
             nextUpdateId = updateId + 1
-            if (matchesChatId != null) {
-                chatId = matchesChatId.groupValues[1].toInt()
+            if (message != null && chatId != null) {
+                when (message.lowercase()) {
+                    WELCOME -> telegramBotService.sendMessage(chatId, "Hello")
+                    START -> telegramBotService.sendMenu(chatId)
+                }
             }
-            telegramBotService.sendMessage(botToken,chatId,"Hello")
         }
     }
 }
