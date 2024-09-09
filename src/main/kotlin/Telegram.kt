@@ -14,13 +14,33 @@ data class UpdateResponse(
 data class Update(
     @SerialName("update_id")
     val updateId: Int,
-    val message: Message?,
+    @SerialName("callback_query")
+    val callbackQuery: CallbackQuery? = null,
+    val message: Message? = null,
+)
+
+@Serializable
+data class CallbackQuery(
+    val id: String,
+    val message: Message,
+    @SerialName("chat_instance")
+    val chatInstance: String,
+    val data: String,
 )
 
 @Serializable
 data class Message(
     val chat: Chat,
-    val text: String?,
+    val date: Long,
+    val text: String,
+    @SerialName("reply_markup")
+    val replyMarkup: ReplyMarkup? = null,
+)
+
+@Serializable
+data class ReplyMarkup(
+    @SerialName("inline_keyboard")
+    val inlineKeyboard: List<List<InlineKeyboardButton>>,
 )
 
 @Serializable
@@ -36,6 +56,7 @@ fun main(argument: Array<String>) {
     val botToken = argument[0]
     val json = Json { ignoreUnknownKeys = true }
     val telegramBotService = TelegramBotService(botToken, json)
+    val learnWordsTrainer = LearnWordsTrainer(4, 3, "words.txt")
     var nextUpdateId = 0
 
     while (true) {
@@ -49,13 +70,29 @@ fun main(argument: Array<String>) {
 
         updates.result.forEach { update ->
             val updateId = update.updateId
-            val chatId = update.message?.chat?.id
-            val message = update.message?.text
             nextUpdateId = updateId + 1
-            if (message != null && chatId != null) {
-                when (message.lowercase()) {
-                    WELCOME -> telegramBotService.sendMessage(chatId, "Hello")
-                    START -> telegramBotService.sendMenu(chatId)
+            update.message?.let { message ->
+                val chatId = message.chat.id
+                val text = message.text
+                if (text != null) {
+                    when (text.lowercase()) {
+                        WELCOME -> telegramBotService.sendMessage(chatId, "Hello")
+                        START -> telegramBotService.sendMenu(chatId)
+                    }
+                }
+            }
+            update.callbackQuery?.let { callbackQuery ->
+                val chatId = callbackQuery.message?.chat?.id
+                val data = callbackQuery.data
+                if (chatId != null) {
+                    when (data) {
+                        BTN_LEARN_WORDS -> telegramBotService.sendMessage(chatId, "Начинаем изучать слова!")
+                        BTN_STATISTICS_CLICKED -> {
+                            val statistics = learnWordsTrainer.getStatistics()
+                            val formattedStatistics = learnWordsTrainer.formatStatistics(statistics)
+                            telegramBotService.sendMessage(chatId, formattedStatistics)
+                        }
+                    }
                 }
             }
         }

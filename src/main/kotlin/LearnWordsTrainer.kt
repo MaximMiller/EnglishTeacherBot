@@ -94,4 +94,9 @@ class LearnWordsTrainer(
         val correctAnswersCount = parts[2].toIntOrNull() ?: 0
         return Word(word, translation, correctAnswersCount)
     }
+
+    fun formatStatistics(statistics: Statistics): String {
+        return "Выучено ${statistics.learnedWordsCount} из ${statistics.totalWordsCount} слов | " +
+                "${statistics.learnedPercentage}%"
+    }
 }
