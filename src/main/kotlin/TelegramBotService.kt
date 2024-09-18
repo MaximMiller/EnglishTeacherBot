@@ -94,7 +94,7 @@ class TelegramBotService(
     }
 
     fun sendQuestion(chatId: Int, question: Question): String {
-        val correctAnswerText = question.word.translation // правильный ответ на английском
+        val correctAnswerText = question.word.translation
         val keyboardButtons = question.answerOptions.mapIndexed { index, answer ->
             InlineKeyboardButton(
                 text = answer.translation,
