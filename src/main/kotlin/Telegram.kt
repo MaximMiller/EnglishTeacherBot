@@ -86,7 +86,10 @@ fun main(argument: Array<String>) {
                 val data = callbackQuery.data
                 if (chatId != null) {
                     when (data) {
-                        BTN_LEARN_WORDS -> telegramBotService.sendMessage(chatId, "Начинаем изучать слова!")
+                        BTN_LEARN_WORDS -> {
+                            telegramBotService.checkNextQuestionAndSend(learnWordsTrainer, chatId)
+                        }
+
                         BTN_STATISTICS_CLICKED -> {
                             val statistics = learnWordsTrainer.getStatistics()
                             val formattedStatistics = learnWordsTrainer.formatStatistics(statistics)

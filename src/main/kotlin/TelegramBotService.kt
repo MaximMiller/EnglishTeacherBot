@@ -11,6 +11,7 @@ import java.net.http.HttpResponse
 
 const val BTN_LEARN_WORDS = "learn_words_clicked"
 const val BTN_STATISTICS_CLICKED = "statistics_clicked"
+const val CALLBACK_DATA_ANSWER_PREFIX = "answer_"
 
 data class Word(
     val word: String,
@@ -91,4 +92,41 @@ class TelegramBotService(
         val responseSendMenu = client.send(requestSendMenu, HttpResponse.BodyHandlers.ofString())
         return responseSendMenu.body()
     }
+
+    fun sendQuestion(chatId: Int, question: Question): String {
+        val correctAnswerText = question.word.translation // правильный ответ на английском
+        val keyboardButtons = question.answerOptions.mapIndexed { index, answer ->
+            InlineKeyboardButton(
+                text = answer.translation,
+                callbackData = "$CALLBACK_DATA_ANSWER_PREFIX$index"
+            )
+        }
+        val inlineKeyboardMarkup = InlineKeyboardMarkup(
+            inlineKeyboard = listOf(keyboardButtons)
+        )
+        val sendMenuRequest = SendMenuRequest(
+            chatId = chatId,
+            text = correctAnswerText,
+            replyMarkup = inlineKeyboardMarkup
+        )
+        val jsonBody = Json.encodeToString(sendMenuRequest)
+        val urlWithSendMessage = "$BASE_URL$botToken/sendMessage"
+        val requestSendMessage = HttpRequest.newBuilder()
+            .uri(URI.create(urlWithSendMessage))
+            .header("Content-Type", "application/json; charset=UTF-8")
+            .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+            .build()
+        val responseSendMessage = client.send(requestSendMessage, HttpResponse.BodyHandlers.ofString())
+        return responseSendMessage.body()
+    }
+
+    fun checkNextQuestionAndSend(trainer: LearnWordsTrainer, chatId: Int) {
+        val question = trainer.getNextQuestion()
+        if (question != null) {
+            sendQuestion(chatId, question)
+        } else {
+            sendMessage(chatId, "Нет доступных вопросов.")
+        }
+    }
 }
+
