@@ -97,7 +97,7 @@ class TelegramBotService(
         val correctAnswerText = question.word.translation
         val keyboardButtons = question.answerOptions.mapIndexed { index, answer ->
             InlineKeyboardButton(
-                text = answer.translation,
+                text = answer.word,
                 callbackData = "$CALLBACK_DATA_ANSWER_PREFIX$index"
             )
         }
